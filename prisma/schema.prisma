@@ -1,0 +1,248 @@
+// QUEDERA SENTINEL — Data model
+//
+// Postgres-first; swappable to Cosmos by changing `datasource db.provider`.
+// Engagement status machine (per wireframe brief §15):
+//
+//   DRAFT
+//     ↓
+//   HIRE_REQUESTED
+//     ↓
+//   CONTRACT_UPLOADED
+//     ↓
+//   AWAITING_CONSULTANT
+//     ↓
+//   VIEWED
+//     ↓
+//   SIGNED
+//     ↓
+//   CONFIRMED ────→ ACTIVE ────→ COMPLETED
+//
+// Branches: CONTRACT_UPLOADED → DECLINED | EXPIRED (5-day no-response).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum UserRole {
+  CONSULTANT
+  CLIENT
+  ADMIN
+}
+
+enum EngagementStatus {
+  DRAFT
+  HIRE_REQUESTED
+  CONTRACT_UPLOADED
+  AWAITING_CONSULTANT
+  VIEWED
+  SIGNED
+  CONFIRMED
+  DECLINED
+  EXPIRED
+  ACTIVE
+  COMPLETED
+}
+
+enum Sector {
+  FINANCIAL_SERVICES
+  TECHNOLOGY
+  DEFENCE
+  GOVERNMENT
+  HEALTHCARE
+  ENERGY
+  OTHER
+}
+
+enum DayAvailability {
+  AVAILABLE
+  UNAVAILABLE
+  BOOKED
+}
+
+enum AuditAction {
+  CV_UPLOADED
+  CV_REPLACED
+  REFERENCE_ADDED
+  REFERENCE_REMOVED
+  RATE_CHANGED
+  AVAILABILITY_CHANGED
+  PROFILE_CREATED
+  PROFILE_UPDATED
+  SEARCH_PERFORMED
+  PROFILE_VIEWED
+  HIRE_REQUESTED
+  CONTRACT_UPLOADED
+  CONTRACT_VIEWED
+  SIGNATURE_ATTEMPTED
+  SIGNED
+  DECLINED
+  ENGAGEMENT_EXPIRED
+  NOTIFICATION_SENT
+  CONSULTANT_APPROVED
+  CONSULTANT_REJECTED
+  CONSULTANT_SUSPENDED
+  USER_REGISTERED
+  USER_LOGGED_IN
+}
+
+// ---------- Core models ----------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  role          UserRole
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+
+  consultant    Consultant?
+  client        Client?
+  auditEvents   AuditEvent[]
+
+  @@index([email])
+}
+
+model Consultant {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName            String
+  phone               String?
+  location            String
+  title               String
+  yearsExperience     Int
+  primarySector       Sector
+  professionalSummary String
+  skills              String[] // free-form list; canonical skills live in a separate enum table in v2
+  dayRate             Int      // GBP
+
+  cvBlobKey           String?  // pointer to object-store blob
+  verified            Boolean  @default(false)
+  profileComplete     Boolean  @default(false)
+
+  references          Reference[]
+  availabilityDays    AvailabilityDay[]
+  engagements         Engagement[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([verified])
+  @@index([primarySector])
+}
+
+model Reference {
+  id           String     @id @default(cuid())
+  consultantId String
+  consultant   Consultant @relation(fields: [consultantId], references: [id], onDelete: Cascade)
+
+  name         String
+  organisation String
+  position     String
+  email        String
+  phone        String
+
+  createdAt    DateTime   @default(now())
+
+  @@index([consultantId])
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  companyName  String
+  contactName  String
+
+  engagements  Engagement[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AvailabilityDay {
+  id           String         @id @default(cuid())
+  consultantId String
+  consultant   Consultant     @relation(fields: [consultantId], references: [id], onDelete: Cascade)
+
+  date         DateTime       @db.Date
+  status       DayAvailability
+
+  @@unique([consultantId, date])
+  @@index([date])
+}
+
+model Engagement {
+  id                  String           @id @default(cuid())
+
+  consultantId        String
+  consultant          Consultant       @relation(fields: [consultantId], references: [id])
+
+  clientId            String
+  client              Client           @relation(fields: [clientId], references: [id])
+
+  role                String
+  startDate           DateTime         @db.Date
+  endDate             DateTime         @db.Date
+  estimatedDays       Int
+  dayRate             Int
+  estimatedValue      Int
+
+  status              EngagementStatus @default(DRAFT)
+
+  contractBlobKey     String?
+  consultantDeadline  DateTime?
+  signedAt            DateTime?
+  declinedAt          DateTime?
+  expiredAt           DateTime?
+
+  auditEvents         AuditEvent[]
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([status])
+  @@index([consultantId])
+  @@index([clientId])
+  @@index([consultantDeadline])
+}
+
+model AuditEvent {
+  id           String      @id @default(cuid())
+  timestamp    DateTime    @default(now())
+
+  actorId      String
+  actor        User        @relation(fields: [actorId], references: [id])
+
+  action       AuditAction
+  resourceType String      // consultant | client | engagement | search | user
+  resourceId   String
+  details      String?     // free-form, e.g. "skills=Transformation;sector=Financial Services"
+
+  @@index([timestamp])
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+}
+
+// ---------- Cosmos migration note ----------
+//
+// To switch to Azure Cosmos DB (PostgreSQL API), change:
+//   datasource db.provider = "postgresql"
+// to:
+//   datasource db.provider = "postgresql"
+//   url      = env("COSMOS_URL")  // Azure Cosmos DB PostgreSQL API endpoint
+//
+// All models are relational and will work on Cosmos PostgreSQL API.
+// If the team later needs Cosmos NoSQL API, the schema will need to be
+// reshaped into container-based denormalised documents.

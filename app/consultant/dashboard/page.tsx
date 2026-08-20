@@ -1,0 +1,126 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
+import { EngagementRow } from "@/components/EngagementRow";
+import { getConsultant, getEngagementsForConsultant } from "@/lib/mock-data";
+
+export default function ConsultantDashboardPage() {
+  const consultant = getConsultant("c1")!;
+  const engagements = getEngagementsForConsultant(consultant.id);
+
+  const checklist = [
+    { label: "CV uploaded", done: !!consultant.cvFile },
+    { label: "Skills completed", done: consultant.skills.length > 0 },
+    { label: "References supplied", done: consultant.references.length > 0 },
+    { label: "Day rate set", done: consultant.dayRate > 0 },
+    { label: "Availability needs updating", done: Object.keys(consultant.availability).length > 0 },
+  ];
+
+  const completionPct = Math.round(
+    (checklist.filter((c) => c.done).length / checklist.length) * 100
+  );
+  const outgoingContract = engagements.find((e) => e.status === "AWAITING_CONSULTANT");
+
+  return (
+    <div>
+      <PageHeader
+        title="YOUR PROFILE"
+        subtitle={`Welcome back, ${consultant.fullName}`}
+        badge="Consultant"
+      />
+      <div className="container mx-auto px-4">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <section className="lg:col-span-2">
+            <div className="card">
+              <h2 className="text-lg font-bold text-quedera-navy mb-4">
+                Profile completeness
+              </h2>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                <div
+                  className="bg-sentinel h-2 rounded-full transition-all"
+                  style={{ width: `${completionPct}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-500 mb-6">{completionPct}% complete</p>
+              <ul className="space-y-2">
+                {checklist.map((c) => (
+                  <li key={c.label} className="flex items-center gap-2 text-sm">
+                    <span
+                      className={
+                        c.done ? "text-sentinel" : "text-gray-400"
+                      }
+                    >
+                      {c.done ? "✓" : "○"}
+                    </span>
+                    <span className={c.done ? "text-quedera-ink" : "text-gray-500"}>
+                      {c.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <section>
+            <div className="card">
+              <h2 className="text-lg font-bold text-quedera-navy mb-4">
+                Contract requests
+              </h2>
+              {outgoingContract ? (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">
+                    {outgoingContract.role}
+                  </p>
+                  <p className="text-2xl font-bold text-quedera-navy mb-2">
+                    £{outgoingContract.estimatedValue.toLocaleString()}
+                  </p>
+                  <Link
+                    href={`/consultant/contract/${outgoingContract.id}`}
+                    className="btn-outline text-xs py-1 px-3 mb-2 inline-block"
+                  >
+                    REVIEW & SIGN
+                  </Link>
+                  <p className="text-xs text-red-600">
+                    Response deadline:{" "}
+                    {outgoingContract.consultantDeadline?.split("T")[0] || "5 days"}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No contract requests.</p>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <section className="mt-8">
+          <h2 className="text-lg font-bold text-quedera-navy mb-4">
+            Recent engagements
+          </h2>
+          <div className="card">
+            {engagements.length > 0 ? (
+              engagements.map((e) => (
+                <EngagementRow key={e.id} engagement={e} />
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 py-4">No engagements yet.</p>
+            )}
+          </div>
+        </section>
+
+        <nav className="mt-8 flex gap-4 border-t border-gray-200 pt-6">
+          <Link href="/register/consultant/profile" className="btn-outline text-sm">
+            PROFILE
+          </Link>
+          <Link href="/register/consultant/availability" className="btn-outline text-sm">
+            AVAILABILITY
+          </Link>
+          <Link href="/consultant/contract/e1" className="btn-outline text-sm">
+            CONTRACTS
+          </Link>
+          <Link href="/" className="btn-outline text-sm">
+            SETTINGS
+          </Link>
+        </nav>
+      </div>
+    </div>
+  );
+}
