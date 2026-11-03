@@ -27,8 +27,8 @@ export default function HireRequestPage({ params }: { params: { id: string } }) 
       />
       <div className="container mx-auto px-4 max-w-xl">
         <div className="card">
-          <div className="bg-gray-50 -m-6 mb-6 p-6 border-b border-gray-200">
-            <p className="text-xs text-gray-500 mb-1">Consultant</p>
+          <div className="bg-quedera-surface -m-6 mb-6 p-6 border-b border-quedera-surface">
+            <p className="text-xs text-quedera-navy/50 mb-1">Consultant</p>
             <p className="font-semibold text-quedera-navy">{consultant.fullName}</p>
           </div>
           <form className="space-y-4">
@@ -62,18 +62,18 @@ export default function HireRequestPage({ params }: { params: { id: string } }) 
             </div>
             <div>
               <label className="label">Estimated days</label>
-              <input className="input bg-gray-50" value={days} readOnly />
+              <input className="input bg-quedera-surface" value={days} readOnly />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">Day rate</label>
-                <p className="text-sm text-quedera-ink">
+                <p className="text-sm text-quedera-navy">
                   £{consultant.dayRate.toLocaleString()}
                 </p>
               </div>
               <div>
                 <label className="label">Estimated value</label>
-                <p className="text-lg font-bold text-sentinel-dark">
+                <p className="text-lg font-bold text-quedera-emerald">
                   £{value.toLocaleString()}
                 </p>
               </div>

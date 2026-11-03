@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     <div className="container mx-auto px-4 py-16 max-w-md">
       <h1 className="text-2xl font-bold text-quedera-navy mb-2">LOGIN</h1>
-      <p className="text-sm text-gray-500 mb-8">
+      <p className="text-sm text-quedera-navy/50 mb-8">
         Sign in to your QUEDERA SENTINEL account.
       </p>
       <form className="card space-y-4">
@@ -40,13 +40,13 @@ export default function LoginPage() {
           SIGN IN
         </button>
       </form>
-      <p className="text-sm text-gray-500 mt-6 text-center">
+      <p className="text-sm text-quedera-navy/50 mt-6 text-center">
         Don&apos;t have an account?{" "}
-        <Link href="/register/consultant" className="text-sentinel font-semibold">
+        <Link href="/register/consultant" className="text-quedera-emerald font-semibold">
           Register as consultant
         </Link>{" "}
         or{" "}
-        <Link href="/register/client" className="text-sentinel font-semibold">
+        <Link href="/register/client" className="text-quedera-emerald font-semibold">
           Register as client
         </Link>
       </p>

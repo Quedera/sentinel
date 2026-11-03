@@ -16,7 +16,7 @@ export default function ClientRegistrationPage() {
       <h1 className="text-2xl font-bold text-quedera-navy mb-2">
         CLIENT REGISTRATION
       </h1>
-      <p className="text-sm text-gray-500 mb-8">
+      <p className="text-sm text-quedera-navy/50 mb-8">
         Register your organisation to find and engage consultants.
       </p>
       <form className="card space-y-4">

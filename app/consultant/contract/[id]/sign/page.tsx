@@ -22,15 +22,15 @@ export default function SignPage({ params }: { params: { id: string } }) {
       />
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="card">
-          <div className="border border-gray-200 rounded p-6 bg-gray-50 mb-6 min-h-[300px]">
+          <div className="border border-quedera-surface rounded p-6 bg-quedera-surface mb-6 min-h-[300px]">
             <h3 className="text-sm font-semibold text-quedera-navy mb-4">
               {client.companyName}
               <br />
-              <span className="text-xs text-gray-500 font-normal">
+              <span className="text-xs text-quedera-navy/50 font-normal">
                 Consulting Agreement — {engagement.role}
               </span>
             </h3>
-            <div className="text-xs text-gray-600 space-y-3 font-mono whitespace-pre-wrap">
+            <div className="text-xs text-quedera-navy/70 space-y-3 font-mono whitespace-pre-wrap">
 {`1. ENGAGEMENT
 The Consultant agrees to provide services to the Client in the role of
 ${engagement.role} for the period ${engagement.startDate} to ${engagement.endDate}
@@ -59,11 +59,11 @@ Either party may terminate this agreement with 5 working days' written notice.`}
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="label">Name</label>
-              <p className="text-sm text-quedera-ink">Jane Smith</p>
+              <p className="text-sm text-quedera-navy">Jane Smith</p>
             </div>
             <div>
               <label className="label">Email</label>
-              <p className="text-sm text-quedera-ink">jane.smith@example.com</p>
+              <p className="text-sm text-quedera-navy">jane.smith@example.com</p>
             </div>
           </div>
           <label className="flex items-center gap-2 mb-4 cursor-pointer">
@@ -71,15 +71,15 @@ Either party may terminate this agreement with 5 working days' written notice.`}
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="h-4 w-4 text-sentinel focus:ring-sentinel border-gray-300 rounded"
+              className="h-4 w-4 text-quedera-emerald focus:ring-quedera-emerald border-quedera-surface rounded"
             />
-            <span className="text-sm text-quedera-ink">
+            <span className="text-sm text-quedera-navy">
               I have reviewed the agreement and agree to its terms.
             </span>
           </label>
           <div className="mb-6">
             <label className="label">Signature</label>
-            <div className="border-2 border-gray-300 rounded-lg h-32 flex items-center justify-center bg-white">
+            <div className="border-2 border-quedera-surface rounded-lg h-32 flex items-center justify-center bg-quedera-surface">
               <input
                 type="text"
                 value={signature}
@@ -90,7 +90,7 @@ Either party may terminate this agreement with 5 working days' written notice.`}
               />
             </div>
           </div>
-          <div className="flex justify-between pt-4 border-t border-gray-100">
+          <div className="flex justify-between pt-4 border-t border-quedera-surface">
             <Link href={`/consultant/contract/${params.id}`} className="btn-outline">
               BACK
             </Link>
@@ -105,7 +105,7 @@ Either party may terminate this agreement with 5 working days' written notice.`}
             </Link>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-6">
+        <p className="text-xs text-quedera-navy/50 mt-6">
           For a production system, the electronic-signature mechanism and legal
           requirements should be defined before development rather than simply
           implementing a drawn signature.

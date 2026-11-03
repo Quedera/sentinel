@@ -16,14 +16,14 @@ export function EngagementRow({
   rightAction,
 }: EngagementRowProps) {
   const row = (
-    <div className="grid grid-cols-12 gap-4 py-4 border-b border-gray-100 items-center">
+    <div className="grid grid-cols-12 gap-4 py-4 border-b border-quedera-surface items-center">
       <div className="col-span-4">
         <p className="font-semibold text-quedera-navy">{engagement.role}</p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-quedera-navy/50">
           Engagement #{engagement.id} · {engagement.estimatedDays} days
         </p>
       </div>
-      <div className="col-span-3 text-sm text-gray-600">
+      <div className="col-span-3 text-sm text-quedera-navy/70">
         {engagement.startDate} → {engagement.endDate}
       </div>
       <div className="col-span-2 text-sm font-semibold text-quedera-navy">
@@ -37,7 +37,7 @@ export function EngagementRow({
   );
   if (href) {
     return (
-      <Link href={href} className="block hover:bg-gray-50">
+      <Link href={href} className="block hover:bg-quedera-surface">
         {row}
       </Link>
     );

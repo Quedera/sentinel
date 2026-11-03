@@ -22,10 +22,10 @@ export default function SearchResultsPage({
       />
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-quedera-navy/50">
             <span className="font-bold text-quedera-navy">{filtered.length}</span> consultants found
           </p>
-          <Link href="/client/search" className="text-sm text-sentinel font-semibold">
+          <Link href="/client/search" className="text-sm text-quedera-emerald font-semibold">
             Modify search
           </Link>
         </div>
@@ -40,7 +40,7 @@ export default function SearchResultsPage({
         </div>
         {filtered.length === 0 && (
           <div className="card text-center py-12">
-            <p className="text-gray-500">
+            <p className="text-quedera-navy/50">
               No consultants match your filters. Try widening your search.
             </p>
             <Link href="/client/search" className="btn-outline mt-4 inline-block">

@@ -45,7 +45,7 @@ export default function AvailabilityStepPage() {
                 value={dayRate}
                 onChange={(e) => setDayRate(Number(e.target.value))}
               />
-              <span className="text-sm text-gray-500">/ day</span>
+              <span className="text-sm text-quedera-navy/50">/ day</span>
             </div>
           </div>
 
@@ -56,7 +56,7 @@ export default function AvailabilityStepPage() {
               <button className="btn-outline">MARK AVAILABLE</button>
               <button className="btn-outline">MARK UNAVAILABLE</button>
             </div>
-            <p className="text-xs text-gray-500 mt-4">
+            <p className="text-xs text-quedera-navy/50 mt-4">
               You can specify full day, half day, multiple consecutive days,
               recurring availability, holiday/unavailable periods, and booked
               periods.

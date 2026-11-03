@@ -14,7 +14,7 @@ export default function AdminAuditPage() {
         <div className="card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
+              <tr className="text-left text-xs text-quedera-navy/50 border-b border-quedera-surface">
                 <th className="py-2">Timestamp</th>
                 <th className="py-2">Actor</th>
                 <th className="py-2">Action</th>
@@ -24,33 +24,33 @@ export default function AdminAuditPage() {
             </thead>
             <tbody>
               {mockAuditEvents.map((e) => (
-                <tr key={e.id} className="border-b border-gray-100">
-                  <td className="py-3 text-gray-500 font-mono text-xs">
+                <tr key={e.id} className="border-b border-quedera-surface">
+                  <td className="py-3 text-quedera-navy/50 font-mono text-xs">
                     {e.timestamp}
                   </td>
-                  <td className="py-3 text-quedera-ink">{e.actor}</td>
+                  <td className="py-3 text-quedera-navy">{e.actor}</td>
                   <td className="py-3">
-                    <span className="badge bg-gray-100 text-gray-700 font-mono">
+                    <span className="badge bg-quedera-surface text-quedera-navy/80 font-mono">
                       {e.action}
                     </span>
                   </td>
-                  <td className="py-3 text-gray-600">
+                  <td className="py-3 text-quedera-navy/70">
                     {e.resourceType}#{e.resourceId}
                   </td>
-                  <td className="py-3 text-gray-500 text-xs">{e.details || "—"}</td>
+                  <td className="py-3 text-quedera-navy/50 text-xs">{e.details || "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-500 mt-6">
+        <p className="text-xs text-quedera-navy/50 mt-6">
           The audit trail is critical for compliance given the contractual nature
           of SENTINEL. Every state change affecting profile, CV, references,
           rate, availability, search, hire, contract views, signature events,
           accept/decline, notifications, and 5-day expiry is captured here.
         </p>
-        <p className="text-xs text-gray-500 mt-3">
-          <Link href="/admin" className="text-sentinel font-semibold">
+        <p className="text-xs text-quedera-navy/50 mt-3">
+          <Link href="/admin" className="text-quedera-emerald font-semibold">
             ← Back to admin home
           </Link>
         </p>

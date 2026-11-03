@@ -34,24 +34,24 @@ export default function ConsultantDashboardPage() {
               <h2 className="text-lg font-bold text-quedera-navy mb-4">
                 Profile completeness
               </h2>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+              <div className="w-full bg-quedera-surface rounded-full h-2 mb-3">
                 <div
-                  className="bg-sentinel h-2 rounded-full transition-all"
+                  className="bg-quedera-emerald h-2 rounded-full transition-all"
                   style={{ width: `${completionPct}%` }}
                 />
               </div>
-              <p className="text-sm text-gray-500 mb-6">{completionPct}% complete</p>
+              <p className="text-sm text-quedera-navy/50 mb-6">{completionPct}% complete</p>
               <ul className="space-y-2">
                 {checklist.map((c) => (
                   <li key={c.label} className="flex items-center gap-2 text-sm">
                     <span
                       className={
-                        c.done ? "text-sentinel" : "text-gray-400"
+                        c.done ? "text-quedera-emerald" : "text-quedera-navy/40"
                       }
                     >
                       {c.done ? "✓" : "○"}
                     </span>
-                    <span className={c.done ? "text-quedera-ink" : "text-gray-500"}>
+                    <span className={c.done ? "text-quedera-navy" : "text-quedera-navy/50"}>
                       {c.label}
                     </span>
                   </li>
@@ -67,7 +67,7 @@ export default function ConsultantDashboardPage() {
               </h2>
               {outgoingContract ? (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">
+                  <p className="text-sm text-quedera-navy/50 mb-1">
                     {outgoingContract.role}
                   </p>
                   <p className="text-2xl font-bold text-quedera-navy mb-2">
@@ -79,13 +79,13 @@ export default function ConsultantDashboardPage() {
                   >
                     REVIEW & SIGN
                   </Link>
-                  <p className="text-xs text-red-600">
+                  <p className="text-xs text-quedera-navy">
                     Response deadline:{" "}
                     {outgoingContract.consultantDeadline?.split("T")[0] || "5 days"}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No contract requests.</p>
+                <p className="text-sm text-quedera-navy/50">No contract requests.</p>
               )}
             </div>
           </section>
@@ -101,12 +101,12 @@ export default function ConsultantDashboardPage() {
                 <EngagementRow key={e.id} engagement={e} />
               ))
             ) : (
-              <p className="text-sm text-gray-500 py-4">No engagements yet.</p>
+              <p className="text-sm text-quedera-navy/50 py-4">No engagements yet.</p>
             )}
           </div>
         </section>
 
-        <nav className="mt-8 flex gap-4 border-t border-gray-200 pt-6">
+        <nav className="mt-8 flex gap-4 border-t border-quedera-surface pt-6">
           <Link href="/register/consultant/profile" className="btn-outline text-sm">
             PROFILE
           </Link>

@@ -78,7 +78,7 @@ export default function ProfileStepPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-between pt-6 mt-6 border-t border-gray-100">
+            <div className="flex justify-between pt-6 mt-6 border-t border-quedera-surface">
               <Link href="/register/consultant" className="btn-outline">
                 BACK
               </Link>

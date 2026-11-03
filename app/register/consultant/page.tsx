@@ -23,7 +23,7 @@ export default function ConsultantRegistrationPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <div className="text-xs font-semibold text-quedera-slate tracking-widest mb-2">
+      <div className="text-xs font-semibold text-quedera-navy/60 tracking-widest mb-2">
         QUEDERA / SENTINEL
       </div>
       <h1 className="text-2xl font-bold text-quedera-navy mb-8">
@@ -31,7 +31,7 @@ export default function ConsultantRegistrationPage() {
       </h1>
       <div className="grid md:grid-cols-3 gap-8">
         <aside>
-          <div className="text-xs font-semibold text-quedera-slate tracking-widest mb-2">
+          <div className="text-xs font-semibold text-quedera-navy/60 tracking-widest mb-2">
             Consultant Setup
           </div>
           <h2 className="text-lg font-bold text-quedera-navy mb-6">

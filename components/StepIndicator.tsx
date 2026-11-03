@@ -15,10 +15,10 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   isActive
-                    ? "bg-sentinel text-white"
+                    ? "bg-quedera-emerald text-quedera-surface"
                     : isComplete
-                    ? "bg-sentinel-tint text-sentinel-dark"
-                    : "bg-gray-100 text-gray-500"
+                    ? "bg-quedera-emerald/10 text-quedera-emerald"
+                    : "bg-quedera-surface text-quedera-navy/50"
                 }`}
                 aria-current={isActive ? "step" : undefined}
               >
@@ -29,8 +29,8 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
                   isActive
                     ? "font-semibold text-quedera-navy"
                     : isComplete
-                    ? "text-sentinel-dark"
-                    : "text-gray-500"
+                    ? "text-quedera-emerald"
+                    : "text-quedera-navy/50"
                 }
               >
                 {step}

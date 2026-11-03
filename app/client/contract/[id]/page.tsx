@@ -20,9 +20,9 @@ export default function ClientContractUploadPage({ params }: { params: { id: str
       <div className="container mx-auto px-4 max-w-xl">
         <div className="card">
           <h3 className="label">Upload contract</h3>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-6">
+          <div className="border-2 border-dashed border-quedera-surface rounded-lg p-12 text-center mb-6">
             {file ? (
-              <div className="bg-sentinel-tint p-4 rounded text-left">
+              <div className="bg-quedera-emerald/10 p-4 rounded text-left">
                 <p className="font-semibold text-quedera-navy">{file}</p>
                 <button className="btn-outline text-xs py-1 px-3 mt-2">
                   VIEW CONTRACT
@@ -30,10 +30,10 @@ export default function ClientContractUploadPage({ params }: { params: { id: str
               </div>
             ) : (
               <div>
-                <p className="text-gray-500 mb-4">
+                <p className="text-quedera-navy/50 mb-4">
                   Drag & drop contract here
                 </p>
-                <p className="text-sm text-gray-400 mb-4">or</p>
+                <p className="text-sm text-quedera-navy/40 mb-4">or</p>
                 <label className="btn-outline cursor-pointer inline-block">
                   CHOOSE FILE
                   <input
@@ -46,12 +46,12 @@ export default function ClientContractUploadPage({ params }: { params: { id: str
             )}
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
-            <p className="text-xs text-gray-500">Consultant confirmation deadline:</p>
+          <div className="bg-quedera-surface border border-quedera-amber rounded p-4 mb-4">
+            <p className="text-xs text-quedera-navy/50">Consultant confirmation deadline:</p>
             <p className="text-sm font-bold text-quedera-navy">
               19 August 2026, 17:00
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-quedera-navy/50 mt-1">
               The consultant will have 5 days to respond.
             </p>
           </div>
@@ -61,9 +61,9 @@ export default function ClientContractUploadPage({ params }: { params: { id: str
               type="checkbox"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
-              className="h-4 w-4 text-sentinel focus:ring-sentinel border-gray-300 rounded"
+              className="h-4 w-4 text-quedera-emerald focus:ring-quedera-emerald border-quedera-surface rounded"
             />
-            <span className="text-sm text-quedera-ink">
+            <span className="text-sm text-quedera-navy">
               I confirm I have authority to submit this contract.
             </span>
           </label>

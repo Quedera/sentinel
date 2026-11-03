@@ -43,12 +43,12 @@ export default function DocumentsStepPage() {
           <div className="card space-y-6">
             <div>
               <h3 className="label">CV</h3>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-quedera-surface rounded-lg p-6 text-center">
                 {cvUploaded ? (
-                  <div className="flex justify-between items-center bg-sentinel-tint rounded p-3">
+                  <div className="flex justify-between items-center bg-quedera-emerald/10 rounded p-3">
                     <div className="text-left">
                       <p className="font-semibold text-quedera-navy">consultant_cv.pdf</p>
-                      <p className="text-xs text-gray-500">Uploaded: 12 Aug 2026</p>
+                      <p className="text-xs text-quedera-navy/50">Uploaded: 12 Aug 2026</p>
                     </div>
                     <div className="flex gap-2">
                       <button className="btn-outline text-xs py-1 px-3">VIEW</button>
@@ -70,7 +70,7 @@ export default function DocumentsStepPage() {
               <div className="flex justify-between items-center mb-3">
                 <h3 className="label !mb-0">References</h3>
                 <button
-                  className="text-xs text-sentinel font-semibold"
+                  className="text-xs text-quedera-emerald font-semibold"
                   onClick={() => setReferences([...references, { ...emptyRef }])}
                 >
                   + ADD REFERENCE
@@ -78,8 +78,8 @@ export default function DocumentsStepPage() {
               </div>
               <div className="space-y-4">
                 {references.map((ref, idx) => (
-                  <div key={idx} className="border border-gray-200 rounded-lg p-4 space-y-3">
-                    <p className="text-xs font-semibold text-quedera-slate tracking-wider">
+                  <div key={idx} className="border border-quedera-surface rounded-lg p-4 space-y-3">
+                    <p className="text-xs font-semibold text-quedera-navy/60 tracking-wider">
                       REFERENCE {idx + 1}
                     </p>
                     <div className="grid grid-cols-2 gap-3">
@@ -140,7 +140,7 @@ export default function DocumentsStepPage() {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+            <p className="text-xs text-quedera-navy/50 bg-quedera-surface p-3 rounded">
               Your information is securely held within QUEDERA SENTINEL.
             </p>
           </div>

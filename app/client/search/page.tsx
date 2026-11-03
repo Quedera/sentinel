@@ -18,7 +18,7 @@ export default function ClientSearchPage() {
       <h1 className="text-2xl font-bold text-quedera-navy mb-2">
         FIND A CONSULTANT
       </h1>
-      <p className="text-sm text-gray-500 mb-8">
+      <p className="text-sm text-quedera-navy/50 mb-8">
         Search by skill, sector, experience, availability or day rate.
       </p>
       <form

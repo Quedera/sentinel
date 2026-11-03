@@ -55,12 +55,12 @@ export default function SkillsStepPage() {
               {selected.map((skill) => (
                 <span
                   key={skill}
-                  className="badge bg-sentinel-tint text-sentinel-dark"
+                  className="badge bg-quedera-emerald/10 text-quedera-emerald"
                 >
                   {skill}
                   <button
                     onClick={() => toggle(skill)}
-                    className="ml-2 text-sentinel-dark hover:text-red-600"
+                    className="ml-2 text-quedera-emerald hover:text-quedera-navy"
                     aria-label={`Remove ${skill}`}
                   >
                     ×
@@ -75,15 +75,15 @@ export default function SkillsStepPage() {
               {SKILL_OPTIONS.map((skill) => (
                 <label
                   key={skill}
-                  className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                  className="flex items-center gap-3 cursor-pointer hover:bg-quedera-surface p-2 rounded"
                 >
                   <input
                     type="checkbox"
                     checked={selected.includes(skill)}
                     onChange={() => toggle(skill)}
-                    className="h-4 w-4 text-sentinel focus:ring-sentinel border-gray-300 rounded"
+                    className="h-4 w-4 text-quedera-emerald focus:ring-quedera-emerald border-quedera-surface rounded"
                   />
-                  <span className="text-sm text-quedera-ink">{skill}</span>
+                  <span className="text-sm text-quedera-navy">{skill}</span>
                 </label>
               ))}
             </div>

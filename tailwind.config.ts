@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import quederaPreset from "../branding/quedera-tailwind-preset.cjs";
 
 const config: Config = {
   content: [
@@ -7,19 +8,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        quedera: {
-          navy: "#0A1F3D",
-          ink: "#1A2A40",
-          slate: "#475569",
-        },
-        sentinel: {
-          DEFAULT: "#2EBA8E",
-          dark: "#1F9D78",
-          light: "#7BD9B5",
-          tint: "#E5F8F1",
-        },
-      },
+      ...quederaPreset.theme.extend,
       fontFamily: {
         sans: [
           "Inter",

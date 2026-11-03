@@ -22,7 +22,7 @@ export default function ClientDashboardPage() {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
-            <p className="text-xs font-semibold text-quedera-slate tracking-widest mb-1">
+            <p className="text-xs font-semibold text-quedera-navy/60 tracking-widest mb-1">
               ACTIVE ENGAGEMENTS
             </p>
             <p className="text-3xl font-bold text-quedera-navy">
@@ -30,13 +30,13 @@ export default function ClientDashboardPage() {
             </p>
           </div>
           <div className="card text-center">
-            <p className="text-xs font-semibold text-quedera-slate tracking-widest mb-1">
+            <p className="text-xs font-semibold text-quedera-navy/60 tracking-widest mb-1">
               PENDING REQUESTS
             </p>
             <p className="text-3xl font-bold text-quedera-navy">{pending.length}</p>
           </div>
           <div className="card text-center">
-            <p className="text-xs font-semibold text-quedera-slate tracking-widest mb-1">
+            <p className="text-xs font-semibold text-quedera-navy/60 tracking-widest mb-1">
               SAVED
             </p>
             <p className="text-3xl font-bold text-quedera-navy">7</p>
@@ -58,7 +58,7 @@ export default function ClientDashboardPage() {
                 <EngagementRow key={e.id} engagement={e} />
               ))
             ) : (
-              <p className="text-sm text-gray-500 py-4">
+              <p className="text-sm text-quedera-navy/50 py-4">
                 No active engagements.
               </p>
             )}

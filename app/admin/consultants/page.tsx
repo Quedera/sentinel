@@ -14,7 +14,7 @@ export default function AdminConsultantsPage() {
         <div className="card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
+              <tr className="text-left text-xs text-quedera-navy/50 border-b border-quedera-surface">
                 <th className="py-2">Name</th>
                 <th className="py-2">Title</th>
                 <th className="py-2">Profile</th>
@@ -26,12 +26,12 @@ export default function AdminConsultantsPage() {
             </thead>
             <tbody>
               {mockConsultants.map((c) => (
-                <tr key={c.id} className="border-b border-gray-100">
+                <tr key={c.id} className="border-b border-quedera-surface">
                   <td className="py-3 font-semibold text-quedera-navy">
                     {c.fullName}
                   </td>
-                  <td className="py-3 text-gray-600">{c.title}</td>
-                  <td className="py-3 text-gray-600">
+                  <td className="py-3 text-quedera-navy/70">{c.title}</td>
+                  <td className="py-3 text-quedera-navy/70">
                     {c.profileComplete ? "COMPLETE" : "INCOMPLETE"}
                   </td>
                   <td className="py-3">{c.cvFile ? "✓" : "—"}</td>
@@ -40,11 +40,11 @@ export default function AdminConsultantsPage() {
                   </td>
                   <td className="py-3">
                     {c.verified ? (
-                      <span className="badge bg-sentinel-tint text-sentinel-dark">
+                      <span className="badge bg-quedera-emerald/10 text-quedera-emerald">
                         VERIFIED
                       </span>
                     ) : (
-                      <span className="badge bg-yellow-100 text-yellow-700">
+                      <span className="badge bg-quedera-surface text-quedera-amber">
                         PENDING
                       </span>
                     )}
@@ -65,9 +65,9 @@ export default function AdminConsultantsPage() {
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-500 mt-6">
+        <p className="text-xs text-quedera-navy/50 mt-6">
           Every action is recorded in the audit trail.{" "}
-          <Link href="/admin/audit" className="text-sentinel font-semibold">
+          <Link href="/admin/audit" className="text-quedera-emerald font-semibold">
             View audit →
           </Link>
         </p>

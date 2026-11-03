@@ -27,21 +27,21 @@ export default function ReviewStepPage() {
           <div className="card space-y-4">
             <div>
               <h3 className="label">Personal details</h3>
-              <p className="text-sm text-quedera-ink">{c.fullName}</p>
-              <p className="text-sm text-gray-500">{c.email}</p>
+              <p className="text-sm text-quedera-navy">{c.fullName}</p>
+              <p className="text-sm text-quedera-navy/50">{c.email}</p>
             </div>
             <div>
               <h3 className="label">Professional profile</h3>
-              <p className="text-sm text-quedera-ink">{c.title}</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-quedera-navy">{c.title}</p>
+              <p className="text-sm text-quedera-navy/50">
                 {c.yearsExperience}+ years · {c.primarySector}
               </p>
-              <p className="text-sm text-gray-600 mt-2">{c.professionalSummary}</p>
+              <p className="text-sm text-quedera-navy/70 mt-2">{c.professionalSummary}</p>
             </div>
             <div>
               <h3 className="label">CV & references</h3>
-              <p className="text-sm text-quedera-ink">✓ {c.cvFile}</p>
-              <p className="text-sm text-quedera-ink">
+              <p className="text-sm text-quedera-navy">✓ {c.cvFile}</p>
+              <p className="text-sm text-quedera-navy">
                 ✓ {c.references.length} references supplied
               </p>
             </div>
@@ -49,7 +49,7 @@ export default function ReviewStepPage() {
               <h3 className="label">Skills</h3>
               <div className="flex flex-wrap gap-2">
                 {c.skills.map((s) => (
-                  <span key={s} className="badge bg-sentinel-tint text-sentinel-dark">
+                  <span key={s} className="badge bg-quedera-emerald/10 text-quedera-emerald">
                     {s}
                   </span>
                 ))}
@@ -62,7 +62,7 @@ export default function ReviewStepPage() {
               </p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-4">
+          <p className="text-xs text-quedera-navy/50 mt-4">
             By submitting, your profile will be reviewed by the QUEDERA SENTINEL
             admin team before being published.
           </p>
