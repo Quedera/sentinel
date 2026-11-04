@@ -89,6 +89,9 @@ export interface PublicConsultant {
   dayRate: number;
   verified: boolean;
   availability: AvailabilityDayResponse[];
+  /** 0..5 denormalised score — secondary search sort (decision #8). */
+  rating: number;
+  ratingCount: number;
 }
 
 export interface DetailedConsultant extends PublicConsultant {
@@ -207,6 +210,69 @@ export interface SignEngagementRequest {
   signature: string; // typed name OR provider signature id
 }
 
+// ---------- Decision #3 — Sentinel Service Confirmation ----------
+
+export interface SignServiceConfirmationRequest {
+  /** The user's typed legal name, as signed. */
+  signedName: string;
+  /** Version of the Service Confirmation document being accepted. */
+  version: string;
+  /** Must be true — the client asserts the user read and agreed. */
+  accepted: boolean;
+}
+
+export interface ServiceConfirmationResponse {
+  id: string;
+  version: string;
+  signedName: string;
+  signedAt: string;
+  verificationStatus: string;
+}
+
+// ---------- Decision #4 — invoicing ----------
+
+export interface InvoiceResponse {
+  id: string;
+  number: string;
+  engagementId: string;
+  clientId: string;
+  consultantId: string;
+  status: string;
+  currency: string;
+  /** All money values are pence (integer). */
+  subtotal: number;
+  vat: number;
+  total: number;
+  issuedAt?: string;
+  dueAt?: string;
+  paidAt?: string;
+  description?: string;
+}
+
+export interface CreateInvoiceRequest {
+  engagementId: string;
+  /** Days to bill. Defaults to the engagement's estimated days. */
+  days?: number;
+  description?: string;
+}
+
+// ---------- Decision #5 — termination & penalties ----------
+
+export interface TerminateEngagementRequest {
+  reason: string;
+  /** Whether the initiating party served the notice period. */
+  gaveNotice: boolean;
+}
+
+export interface TerminateEngagementResponse {
+  engagementId: string;
+  status: EngagementStatus;
+  side: string;
+  penalty: number;
+  effectiveDate: string;
+  noticeDays: number;
+}
+
 export interface DeclineEngagementRequest {
   reason?: string;
 }
@@ -239,11 +305,13 @@ export const ENGAGEMENT_TRANSITIONS: Record<EngagementStatus, EngagementStatus[]
   AWAITING_CONSULTANT: ["VIEWED", "DECLINED", "EXPIRED"],
   VIEWED: ["SIGNED", "DECLINED", "EXPIRED"],
   SIGNED: ["CONFIRMED"],
-  CONFIRMED: ["ACTIVE"],
-  ACTIVE: ["COMPLETED"],
+  CONFIRMED: ["ACTIVE", "TERMINATED"],
+  ACTIVE: ["COMPLETED", "TERMINATED"],
   DECLINED: [],
   EXPIRED: [],
   COMPLETED: [],
+  // Decision #5 — cancellation is terminal.
+  TERMINATED: [],
 };
 
 export function canTransition(

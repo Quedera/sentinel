@@ -36,6 +36,16 @@ enum UserRole {
   ADMIN
 }
 
+// Verification lifecycle for the Sentinel Service Confirmation (decision #3).
+// A user registers PENDING, signs the Service Confirmation on subscribe, and
+// is promoted to VERIFIED by a QUEDERA administrator.
+enum VerificationStatus {
+  PENDING
+  SERVICE_CONFIRMATION_SIGNED
+  VERIFIED
+  REJECTED
+}
+
 enum EngagementStatus {
   DRAFT
   HIRE_REQUESTED
@@ -48,6 +58,10 @@ enum EngagementStatus {
   EXPIRED
   ACTIVE
   COMPLETED
+  // Extension beyond the §15 brief: terminal state for a cancelled
+  // engagement. Added for decision #5 (disputes & mid-engagement
+  // cancellation). Flagged in README as an open point.
+  TERMINATED
 }
 
 enum Sector {
@@ -90,6 +104,14 @@ enum AuditAction {
   CONSULTANT_SUSPENDED
   USER_REGISTERED
   USER_LOGGED_IN
+  SERVICE_CONFIRMATION_SIGNED
+  VERIFICATION_GRANTED
+  VERIFICATION_REJECTED
+  INVOICE_ISSUED
+  INVOICE_PAID
+  INVOICE_VOIDED
+  ENGAGEMENT_TERMINATED
+  TERMINATION_PENALTY_APPLIED
 }
 
 // ---------- Core models ----------
@@ -104,11 +126,18 @@ model User {
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
 
+  // Decision #3 — Sentinel Service Confirmation
+  verificationStatus VerificationStatus @default(PENDING)
+
   consultant    Consultant?
   client        Client?
   auditEvents   AuditEvent[]
 
+  serviceConfirmations ServiceConfirmation[]
+  terminations        Termination[]         @relation("TerminationInitiator")
+
   @@index([email])
+  @@index([verificationStatus])
 }
 
 model Consultant {
@@ -130,9 +159,20 @@ model Consultant {
   verified            Boolean  @default(false)
   profileComplete     Boolean  @default(false)
 
+  // Decision #8 — search ordering. rating is a denormalised 0..5 score
+  // maintained by the admin console; ratingCount is how many reviews it
+  // aggregates. Refine post-launch.
+  rating              Float    @default(0)
+  ratingCount         Int      @default(0)
+
+  // "Most recently active" for search ordering. Bumped on meaningful
+  // activity (profile update, contract action, availability change).
+  lastActiveAt        DateTime @default(now())
+
   references          Reference[]
   availabilityDays    AvailabilityDay[]
   engagements         Engagement[]
+  invoices            Invoice[]
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -166,6 +206,7 @@ model Client {
   contactName  String
 
   engagements  Engagement[]
+  invoices     Invoice[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -207,7 +248,14 @@ model Engagement {
   declinedAt          DateTime?
   expiredAt           DateTime?
 
+  // Decision #5 — disputes & mid-engagement cancellation
+  terminatedAt        DateTime?
+  terminationReason   String?
+  terminationPenalty  Int      @default(0) // pence
+
   auditEvents         AuditEvent[]      @relation("EngagementAudit")
+  invoices            Invoice[]
+  termination         Termination?
 
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -237,6 +285,89 @@ model AuditEvent {
   @@index([resourceType, resourceId])
   @@index([actorId])
   @@index([engagementId])
+}
+
+// ---------- Decision #3 — Sentinel Service Confirmation ----------
+//
+// A user signs the Service Confirmation when they subscribe. The signed
+// record is retained so the audit trail can evidence consent.
+
+model ServiceConfirmation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version     String   // document version, e.g. "2026-11-01"
+  signedName  String
+  signedAt    DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------- Decision #4 — invoicing ----------
+//
+// Money amounts are stored in PENCE (integer) to avoid float drift.
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  VOID
+}
+
+model Invoice {
+  id           String        @id @default(cuid())
+  number       String        @unique
+  engagementId String
+  engagement   Engagement    @relation(fields: [engagementId], references: [id])
+  clientId     String
+  client       Client        @relation(fields: [clientId], references: [id])
+  consultantId String
+  consultant   Consultant    @relation(fields: [consultantId], references: [id])
+  status       InvoiceStatus @default(DRAFT)
+  currency     String        @default("GBP")
+  subtotal     Int           // pence
+  vat          Int           @default(0)
+  total        Int           // pence
+  issuedAt     DateTime?
+  dueAt        DateTime?
+  paidAt       DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([engagementId])
+  @@index([status])
+  @@index([clientId])
+  @@index([consultantId])
+}
+
+// ---------- Decision #5 — termination & penalties ----------
+
+enum TerminationSide {
+  CLIENT
+  CONSULTANT
+}
+
+model Termination {
+  id            String          @id @default(cuid())
+  // @unique — one termination record per engagement (Engagement.termination
+  // is the one-to-one side).
+  engagementId  String          @unique
+  engagement    Engagement      @relation(fields: [engagementId], references: [id])
+  initiatedById String
+  initiatedBy   User            @relation("TerminationInitiator", fields: [initiatedById], references: [id])
+  side          TerminationSide
+  reason        String
+  penalty       Int             // pence
+  effectiveDate DateTime
+  settledAt     DateTime?
+  createdAt     DateTime        @default(now())
+
+  @@index([engagementId])
+  @@index([side])
 }
 
 // ---------- Cosmos migration note ----------

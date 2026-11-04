@@ -113,7 +113,10 @@ export async function GET(request: Request) {
       include: { availabilityDays: true },
       take: params.limit ?? 20,
       skip: params.offset ?? 0,
-      orderBy: { createdAt: "desc" },
+      // Decision #8 (locked 2026-10-18): most-recently-active, then by
+      // rating. Tiebreak on rating is the refinement called out for
+      // post-launch.
+      orderBy: [{ lastActiveAt: "desc" }, { rating: "desc" }],
     }),
   ]);
 
@@ -127,6 +130,8 @@ export async function GET(request: Request) {
     location: c.location,
     dayRate: c.dayRate,
     verified: c.verified,
+    rating: c.rating,
+    ratingCount: c.ratingCount,
     availability: c.availabilityDays.map(
       (d): AvailabilityDayResponse => ({
         date: d.date.toISOString().split("T")[0],

@@ -2,22 +2,25 @@ import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { EngagementRow } from "@/components/EngagementRow";
 import { getConsultant, getEngagementsForConsultant } from "@/lib/mock-data";
+import { computeCompleteness } from "@/lib/completeness";
 
 export default function ConsultantDashboardPage() {
   const consultant = getConsultant("c1")!;
   const engagements = getEngagementsForConsultant(consultant.id);
 
-  const checklist = [
-    { label: "CV uploaded", done: !!consultant.cvFile },
-    { label: "Skills completed", done: consultant.skills.length > 0 },
-    { label: "References supplied", done: consultant.references.length > 0 },
-    { label: "Day rate set", done: consultant.dayRate > 0 },
-    { label: "Availability needs updating", done: Object.keys(consultant.availability).length > 0 },
-  ];
+  // Decision #6 — weighted completeness. A soft nudge, not a gate:
+  // nothing here blocks the consultant, it just shows what is worth
+  // finishing next. Weights live in lib/completeness.ts.
+  const completeness = computeCompleteness({
+    hasCv: !!consultant.cvFile,
+    referenceCount: consultant.references.length,
+    skillCount: consultant.skills.length,
+    dayRate: consultant.dayRate,
+    hasSummary: consultant.professionalSummary.length > 0,
+  });
 
-  const completionPct = Math.round(
-    (checklist.filter((c) => c.done).length / checklist.length) * 100
-  );
+  const checklist = completeness.fields;
+  const completionPct = completeness.percent;
   const outgoingContract = engagements.find((e) => e.status === "AWAITING_CONSULTANT");
 
   return (

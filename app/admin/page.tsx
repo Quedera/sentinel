@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { mockConsultants } from "@/lib/mock-data";
+import { prisma } from "@/lib/db";
 
-export default function AdminHomePage() {
-  const pending = mockConsultants.filter((c) => !c.verified).length;
-  const active = mockConsultants.filter((c) => c.verified).length;
-  const suspended = 0;
+// Admin overview — backed by the live database, not mock data.
+export const dynamic = "force-dynamic";
+
+export default async function AdminHomePage() {
+  const [pending, active, suspended, pendingVerification, invoiceCount] =
+    await Promise.all([
+      prisma.consultant.count({ where: { profileComplete: false } }),
+      prisma.consultant.count({ where: { verified: true, profileComplete: true } }),
+      prisma.consultant.count({ where: { verified: false } }),
+      prisma.user.count({
+        where: { verificationStatus: "SERVICE_CONFIRMATION_SIGNED" },
+      }),
+      prisma.invoice.count({ where: { status: { not: "VOID" } } }),
+    ]);
 
   return (
     <div>
@@ -25,12 +35,12 @@ export default function AdminHomePage() {
             CONSULTANTS
           </Link>{" "}
           ·{" "}
-          <Link href="/admin" className="text-quedera-emerald font-semibold">
-            CLIENTS
+          <Link href="/admin/verifications" className="text-quedera-emerald font-semibold">
+            VERIFICATIONS
           </Link>{" "}
           ·{" "}
-          <Link href="/admin" className="text-quedera-emerald font-semibold">
-            CONTRACTS
+          <Link href="/admin/invoices" className="text-quedera-emerald font-semibold">
+            INVOICES
           </Link>{" "}
           ·{" "}
           <Link href="/admin/audit" className="text-quedera-emerald font-semibold">
@@ -51,8 +61,36 @@ export default function AdminHomePage() {
             <p className="text-3xl font-bold text-quedera-emerald">{active}</p>
           </div>
           <div className="card">
-            <p className="text-xs text-quedera-navy/50">Suspended</p>
+            <p className="text-xs text-quedera-navy/50">Unverified</p>
             <p className="text-3xl font-bold text-quedera-navy">{suspended}</p>
+          </div>
+        </div>
+
+        <h2 className="text-sm font-bold text-quedera-navy tracking-wider mb-3">
+          PLATFORM
+        </h2>
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="card">
+            <p className="text-xs text-quedera-navy/50">Awaiting verification</p>
+            <p className="text-3xl font-bold text-quedera-navy">
+              {pendingVerification}
+            </p>
+            <Link
+              href="/admin/verifications"
+              className="text-sm text-quedera-emerald font-semibold"
+            >
+              Review now →
+            </Link>
+          </div>
+          <div className="card">
+            <p className="text-xs text-quedera-navy/50">Invoices raised</p>
+            <p className="text-3xl font-bold text-quedera-navy">{invoiceCount}</p>
+            <Link
+              href="/admin/invoices"
+              className="text-sm text-quedera-emerald font-semibold"
+            >
+              Open register →
+            </Link>
           </div>
         </div>
 
@@ -62,7 +100,10 @@ export default function AdminHomePage() {
           </h2>
           <p className="text-sm text-quedera-navy/50">
             {pending} consultant{pending === 1 ? "" : "s"} awaiting review.{" "}
-            <Link href="/admin/consultants" className="text-quedera-emerald font-semibold">
+            <Link
+              href="/admin/consultants"
+              className="text-quedera-emerald font-semibold"
+            >
               Review now →
             </Link>
           </p>

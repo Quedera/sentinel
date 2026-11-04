@@ -3,6 +3,8 @@ import type { EngagementStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { authProvider } from "@/lib/auth";
 import { canTransition } from "@/lib/api/contract";
+import { notifyUser } from "@/lib/notify/events";
+import { contractSigned } from "@/lib/notify/templates";
 import type {
   SignEngagementRequest,
   ApiResult,
@@ -143,18 +145,41 @@ export async function POST(
           resourceType: "engagement",
           resourceId: eng.id,
         },
-        {
-          actorId: session.id,
-          engagementId: eng.id,
-          action: "NOTIFICATION_SENT",
-          resourceType: "engagement",
-          resourceId: eng.id,
-          details: "notified both parties (mock)",
-        },
       ],
     });
+
+    // Bump the consultant's activity timestamp — this is the primary
+    // search sort (decision #8: most-recently-active).
+    await tx.consultant.update({
+      where: { id: engagement.consultantId },
+      data: { lastActiveAt: new Date() },
+    });
+
     return eng;
   });
+
+  // Decision #7 — both parties are notified by email.
+  //
+  // Notifications are sent AFTER the transaction commits. A mail outage must
+  // never roll back a signed contract, so a send failure is recorded rather
+  // than thrown. See lib/notify/events.ts.
+  const startDateText = engagement.startDate.toISOString().split("T")[0];
+  await notifyUser(session.id, engagement.consultant.user, (name) =>
+    contractSigned(
+      name,
+      engagement.client.companyName,
+      engagement.role,
+      startDateText
+    )
+  );
+  await notifyUser(session.id, engagement.client.user, (name) =>
+    contractSigned(
+      name,
+      engagement.consultant.fullName,
+      engagement.role,
+      startDateText
+    )
+  );
 
   const response: EngagementResponse = {
     id: updated.id,

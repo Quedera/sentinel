@@ -32,9 +32,15 @@ Swapped via env var, no code change:
 | Auth | `noop` / `nextauth` / `entra` | `AUTH_PROVIDER` |
 | E-signature | `mock` / `docusign` | `EIG_PROVIDER` |
 | Contract storage | `local` / `azureblob` | `CONTRACT_STORAGE` |
+| Notifications | `console` / `smtp` | `NOTIFY_PROVIDER` |
 
 `noop` accepts any email + any non-empty password and auto-creates a stub user
 row. **Never use in production.**
+
+`console` (the default for notifications) prints every message to stdout, so
+local development needs no SMTP credentials and every notification SENTINEL
+believes it sent is visible in the logs. Set `NOTIFY_PROVIDER=smtp` for real
+delivery — see the SMTP block in `.env.example`.
 
 ## Tech stack
 
@@ -149,9 +155,18 @@ The `noop` auth provider accepts **any** password for a known email:
 - `/client/dashboard` — Active engagements + pending requests
 
 ### Admin
-- `/admin` — Admin home (consultant counts + recent activity)
+- `/admin` — Admin home (consultant counts, verification queue, invoice totals)
 - `/admin/consultants` — Consultant review table
+- `/admin/verifications` — Sentinel Service Confirmation queue
+- `/admin/invoices` — Invoice register with outstanding / paid totals
 - `/admin/audit` — Audit trail
+
+### API
+- `POST /api/service-confirmation/sign` — sign the Service Confirmation
+- `GET|POST /api/invoices` — list / raise invoices
+- `POST /api/engagements/[id]/terminate` — terminate with penalty
+- `POST /api/engagements/[id]/sign` — sign (mock or DocuSign)
+- `GET /api/search/consultants` — filtered, ranked search
 
 ## Project structure
 
@@ -202,25 +217,45 @@ sentinel/
 | `sentinel-dark` | `#1F9D78` | Hover / accent          |
 | `sentinel-tint` | `#E5F8F1` | Soft backgrounds, badges |
 
-## Open questions
+## Decisions
 
-**Locked** (Craig, 2026-10-18):
+**Locked and implemented** (Craig, 2026-10-18):
 
-- Positioning — "two-sided marketplace"
-- E-signature — **DocuSign**
-- Identity verification — at registration, on signing the **Sentinel Service Confirmation**
-- Money flow — **invoicing**
-- Disputes / mid-engagement cancellation — contract termination penalty, both sides
-- Profile completeness — pure UX, weighted, soft nudge, no gating
-- Notifications — **email**
-- Search ranking — most-recently-active, then by rating (refine post-launch)
-- Owner — Craig. Target — **November 2026**
+| # | Decision | Where it lives |
+|---|---|---|
+| 1 | Positioning — "two-sided marketplace" | package.json description, README |
+| 2 | E-signature — **DocuSign** | `lib/eig/providers/docusign.ts`, `/api/webhooks/docusign` |
+| 3 | Identity verification — at registration, on signing the **Sentinel Service Confirmation** | `lib/service-confirmation.ts`, `/api/service-confirmation/sign`, `/admin/verifications` |
+| 4 | Money flow — **invoicing** | `lib/invoicing.ts`, `/api/invoices`, `/admin/invoices` |
+| 5 | Disputes / mid-engagement cancellation — contract termination penalty, both sides | `lib/termination.ts`, `/api/engagements/[id]/terminate` |
+| 6 | Profile completeness — pure UX, weighted, soft nudge, no gating | `lib/completeness.ts`, consultant dashboard |
+| 7 | Notifications — **email** | `lib/notify/` (console \| smtp) |
+| 8 | Search ranking — most-recently-active, then by rating | `/api/search/consultants` orderBy |
 
-**Still open:**
+Owner — Craig. Target — **November 2026**.
+
+**Still open (needs Craig's call):**
 
 1. **SENTINEL vs DUET relationship** — same brand family / sibling / standalone?
 2. **Hosting target** — Azure (if DUET-family) / Vercel / something else?
 3. **Contract storage** — `local` is wired; `azureblob` needs a connection string
+4. **Termination penalty rate** — defaults to 10% of undelivered value
+   (`TERMINATION_PENALTY_RATE` in `lib/termination.ts`). Is 10% right?
+5. **Termination notice period** — defaults to 14 days
+   (`TERMINATION_NOTICE_DAYS`). Right?
+6. **VAT basis** — defaults to 20% on the subtotal, invoiced gross
+   (`VAT_RATE` in `lib/invoicing.ts`). Gross or net? Does VAT sit with the
+   consultant as a registered supplier?
+7. **Payment terms** — defaults to 14 days from issue
+   (`DEFAULT_PAYMENT_TERMS_DAYS`).
+8. **Service Confirmation legal text + version scheme** — the current document
+   (`version 2026-11-01`) needs sign-off from whoever owns the QUEDERA service
+   terms. `lib/service-confirmation.ts` holds the text and version together.
+9. **TERMINATED as a new engagement state** — an extension beyond the §15
+   brief, needed for decision #5. Confirm it is acceptable to extend the
+   state machine.
+10. **Search rating source** — `Consultant.rating` is denormalised and
+    admin-maintained for now; there is no review submission flow yet.
 
 ## Audit trail
 
@@ -234,14 +269,11 @@ is signed in (currently a TODO in the route handler).
 
 ## Not yet wired
 
-- **Identity verification** — Sentinel Service Confirmation at registration
-- **Invoicing** — no invoice model in the schema
-- **Termination penalties** — no fields for dispute / cancellation handling
-- **Email notifications** — no mailer wired
-- **Rating tiebreak** — search orders by `createdAt desc` only
-- **Profile completeness weighting** — the dashboard shows a static figure
 - **Real e-signature** — DocuSign SDK is integrated but needs sandbox credentials
   (`scripts/smoke-test-sign.js` exercises it); the typed-name fallback remains in the UI
 - **Contract storage** — `local` provider only
+- **SMTP delivery** — notifications default to `console`; `smtp` needs credentials
+- **Rating review flow** — ratings are denormalised, no submission UI
+- **Payment collection** — SENTINEL issues invoices but does not take payment
 
-All of these are Tier 2 / Tier 3 concerns.
+All of these are Tier 3 concerns.

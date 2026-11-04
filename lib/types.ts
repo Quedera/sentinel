@@ -12,7 +12,8 @@ export type EngagementStatus =
   | "DECLINED"
   | "EXPIRED"
   | "ACTIVE"
-  | "COMPLETED";
+  | "COMPLETED"
+  | "TERMINATED";
 
 export const ENGAGEMENT_STATUS_LABELS: Record<EngagementStatus, string> = {
   DRAFT: "Draft",
@@ -26,7 +27,33 @@ export const ENGAGEMENT_STATUS_LABELS: Record<EngagementStatus, string> = {
   EXPIRED: "Expired",
   ACTIVE: "Active",
   COMPLETED: "Completed",
+  TERMINATED: "Terminated",
 };
+
+/**
+ * Verification lifecycle (decision #3 — Sentinel Service Confirmation).
+ *
+ * A user registers PENDING, signs the Service Confirmation when they
+ * subscribe, and is promoted to VERIFIED by a QUEDERA administrator.
+ */
+export type VerificationStatus =
+  | "PENDING"
+  | "SERVICE_CONFIRMATION_SIGNED"
+  | "VERIFIED"
+  | "REJECTED";
+
+export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
+  PENDING: "Pending",
+  SERVICE_CONFIRMATION_SIGNED: "Confirmation signed",
+  VERIFIED: "Verified",
+  REJECTED: "Rejected",
+};
+
+/** Invoice lifecycle (decision #4 — invoicing). */
+export type InvoiceStatus = "DRAFT" | "ISSUED" | "PAID" | "OVERDUE" | "VOID";
+
+/** Which party terminated an engagement (decision #5). */
+export type TerminationSide = "CLIENT" | "CONSULTANT";
 
 export interface AvailabilityMap {
   [date: string]: "available" | "unavailable" | "booked";
@@ -79,6 +106,11 @@ export interface Consultant {
   verified: boolean;
   profileComplete: boolean;
   availability: AvailabilityMap;
+  /** Denormalised 0..5 score used as the search tiebreak (decision #8). */
+  rating?: number;
+  ratingCount?: number;
+  /** Last meaningful activity — primary search sort (decision #8). */
+  lastActiveAt?: string;
 }
 
 export interface Reference {
@@ -113,6 +145,10 @@ export interface Engagement {
   signedAt?: string;
   declinedAt?: string;
   expiredAt?: string;
+  terminatedAt?: string;
+  terminationReason?: string;
+  /** Termination penalty in pence (decision #5). */
+  terminationPenalty?: number;
 }
 
 export interface SearchFilters {

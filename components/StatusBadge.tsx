@@ -17,6 +17,7 @@ const STATUS_COLORS: Record<EngagementStatus, string> = {
   EXPIRED: "bg-quedera-surface text-quedera-navy",
   ACTIVE: "bg-quedera-emerald/10 text-quedera-emerald",
   COMPLETED: "bg-quedera-surface text-quedera-navy/80",
+  TERMINATED: "bg-quedera-amber/10 text-quedera-amber",
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {

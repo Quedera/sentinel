@@ -1,0 +1,123 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
+import { prisma } from "@/lib/db";
+
+// Verification queue — decision #3 (Sentinel Service Confirmation).
+//
+// A user signs the Service Confirmation when they subscribe, which moves
+// them to SERVICE_CONFIRMATION_SIGNED. An administrator promotes them to
+// VERIFIED here.
+export const dynamic = "force-dynamic";
+
+const STATUS_STYLES: Record<string, string> = {
+  PENDING: "bg-quedera-surface text-quedera-amber",
+  SERVICE_CONFIRMATION_SIGNED: "bg-quedera-cyan/10 text-quedera-cyan",
+  VERIFIED: "bg-quedera-emerald/10 text-quedera-emerald",
+  REJECTED: "bg-quedera-surface text-quedera-navy",
+};
+
+export default async function AdminVerificationsPage() {
+  const users = await prisma.user.findMany({
+    orderBy: [{ verificationStatus: "asc" }, { email: "asc" }],
+    include: {
+      serviceConfirmations: {
+        orderBy: { signedAt: "desc" },
+        take: 1,
+      },
+      consultant: { select: { fullName: true, title: true } },
+      client: { select: { companyName: true } },
+    },
+  });
+
+  const counts = users.reduce(
+    (acc, u) => {
+      acc[u.verificationStatus] = (acc[u.verificationStatus] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const STATUSES = [
+    "PENDING",
+    "SERVICE_CONFIRMATION_SIGNED",
+    "VERIFIED",
+    "REJECTED",
+  ] as const;
+
+  return (
+    <div>
+      <PageHeader
+        title="VERIFICATIONS"
+        subtitle="Sentinel Service Confirmation queue"
+        badge="Admin"
+        action={
+          <Link href="/admin" className="btn-outline text-sm">
+            BACK
+          </Link>
+        }
+      />
+      <div className="container mx-auto px-4">
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          {STATUSES.map((status) => (
+            <div key={status} className="card">
+              <p className="text-xs text-quedera-navy/50">
+                {status === "SERVICE_CONFIRMATION_SIGNED"
+                  ? "Confirmation signed"
+                  : status.charAt(0) + status.slice(1).toLowerCase()}
+              </p>
+              <p className="text-3xl font-bold text-quedera-navy">
+                {counts[status] ?? 0}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="card">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-quedera-navy/50 border-b border-quedera-surface">
+                <th className="py-2">Email</th>
+                <th className="py-2">Party</th>
+                <th className="py-2">Status</th>
+                <th className="py-2">Signed</th>
+                <th className="py-2">Version</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const conf = u.serviceConfirmations[0];
+                return (
+                  <tr key={u.id} className="border-b border-quedera-surface">
+                    <td className="py-3 font-semibold text-quedera-navy">
+                      {u.email}
+                    </td>
+                    <td className="py-3 text-quedera-navy/70">
+                      {u.consultant?.fullName ??
+                        u.client?.companyName ??
+                        u.role}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={
+                          "badge " + (STATUS_STYLES[u.verificationStatus] ?? "")
+                        }
+                      >
+                        {u.verificationStatus}
+                      </span>
+                    </td>
+                    <td className="py-3 text-quedera-navy/70">
+                      {conf ? conf.signedAt.toISOString().split("T")[0] : "—"}
+                    </td>
+                    <td className="py-3 text-quedera-navy/70">
+                      {conf?.version ?? "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
