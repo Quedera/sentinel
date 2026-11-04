@@ -124,6 +124,22 @@ The `noop` auth provider accepts **any** password for a known email:
 | `elena.volkov@example.com` | CONSULTANT |
 | `marcus.reid@example.com` | CONSULTANT (profile incomplete — excluded from search) |
 
+### Verifying it
+
+```bash
+npm run verify
+# or: ./scripts/verify-decisions.sh [base-url]
+```
+
+An acceptance script that asserts the invariants behind the decision set
+against a running instance — invoice numbering cannot collide, termination
+is only possible from a contractual engagement and only by a party,
+verification decisions are admin-only and audited, and search ordering is
+most-recently-active. It reseeds afterwards to restore the demo state
+(pass `--no-reseed` to skip).
+
+It exits non-zero if any check fails, so it works as a CI gate.
+
 ## Routes
 
 ### Public / auth

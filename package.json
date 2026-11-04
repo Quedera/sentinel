@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "verify": "bash scripts/verify-decisions.sh"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
