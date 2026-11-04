@@ -140,6 +140,30 @@ most-recently-active. It reseeds afterwards to restore the demo state
 
 It exits non-zero if any check fails, so it works as a CI gate.
 
+### Running it as a service
+
+The app can run as a systemd **user** unit, which keeps it alive outside any
+agent session and across reboots (this box has user lingering enabled).
+
+```bash
+cp deploy/sentinel.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now sentinel.service
+systemctl --user status sentinel.service
+```
+
+It runs `next dev` with hot reload, matching how the DUET frontend is
+hosted on this box, and listens on `0.0.0.0:3002`. Logs go to
+`/tmp/sentinel.log`.
+
+The Postgres container needs to come back after a reboot too:
+
+```bash
+docker update --restart unless-stopped sentinel-pg
+```
+
+To stop it: `systemctl --user disable --now sentinel.service`.
+
 ## Routes
 
 ### Public / auth
