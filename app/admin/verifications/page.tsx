@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { PageHeader } from "@/components/PageHeader";
 import { prisma } from "@/lib/db";
+import { authProvider } from "@/lib/auth";
+import { decideVerification } from "@/lib/verification";
 
 // Verification queue — decision #3 (Sentinel Service Confirmation).
 //
 // A user signs the Service Confirmation when they subscribe, which moves
 // them to SERVICE_CONFIRMATION_SIGNED. An administrator promotes them to
-// VERIFIED here.
+// VERIFIED (or rejects them) here.
+//
+// The decision itself is a server action, so no session token is ever
+// shipped to the browser. It calls the same lib/verification.ts helper as
+// POST /api/admin/verifications/[userId].
 export const dynamic = "force-dynamic";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -15,6 +23,42 @@ const STATUS_STYLES: Record<string, string> = {
   VERIFIED: "bg-quedera-emerald/10 text-quedera-emerald",
   REJECTED: "bg-quedera-surface text-quedera-navy",
 };
+
+/**
+ * Apply a verification decision from the admin console.
+ *
+ * Auth: reads the session cookie. In local development there is no login
+ * flow yet, so it falls back to ADMIN_EMAIL — this is why that env var
+ * exists, and why it must never be set in production.
+ */
+async function decide(formData: FormData) {
+  "use server";
+
+  const userId = String(formData.get("userId") ?? "");
+  const decision = String(formData.get("decision") ?? "");
+  if (!userId || (decision !== "grant" && decision !== "reject")) return;
+
+  let actorId: string | null = null;
+
+  const token = cookies().get("session")?.value;
+  if (token) {
+    const session = await authProvider.resolveSession(token);
+    if (session && session.role === "ADMIN") actorId = session.id;
+  }
+
+  if (!actorId && process.env.NODE_ENV !== "production") {
+    const email = process.env.ADMIN_EMAIL;
+    if (email) {
+      const session = await authProvider.resolveSession(email + ":ADMIN");
+      if (session) actorId = session.id;
+    }
+  }
+
+  if (!actorId) return;
+
+  await decideVerification(actorId, userId, decision);
+  revalidatePath("/admin/verifications");
+}
 
 export default async function AdminVerificationsPage() {
   const users = await prisma.user.findMany({
@@ -81,11 +125,16 @@ export default async function AdminVerificationsPage() {
                 <th className="py-2">Status</th>
                 <th className="py-2">Signed</th>
                 <th className="py-2">Version</th>
+                <th className="py-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => {
                 const conf = u.serviceConfirmations[0];
+                const decidable =
+                  u.verificationStatus === "SERVICE_CONFIRMATION_SIGNED" ||
+                  u.verificationStatus === "PENDING" ||
+                  u.verificationStatus === "REJECTED";
                 return (
                   <tr key={u.id} className="border-b border-quedera-surface">
                     <td className="py-3 font-semibold text-quedera-navy">
@@ -108,8 +157,28 @@ export default async function AdminVerificationsPage() {
                     <td className="py-3 text-quedera-navy/70">
                       {conf ? conf.signedAt.toISOString().split("T")[0] : "—"}
                     </td>
-                    <td className="py-3 text-quedera-navy/70">
-                      {conf?.version ?? "—"}
+                    <td className="py-3 text-quedera-navy/70">{conf?.version ?? "—"}</td>
+                    <td className="py-3">
+                      {decidable ? (
+                        <div className="flex gap-2 justify-end">
+                          <form action={decide}>
+                            <input type="hidden" name="userId" value={u.id} />
+                            <input type="hidden" name="decision" value="grant" />
+                            <button type="submit" className="btn-outline text-xs">
+                              APPROVE
+                            </button>
+                          </form>
+                          <form action={decide}>
+                            <input type="hidden" name="userId" value={u.id} />
+                            <input type="hidden" name="decision" value="reject" />
+                            <button type="submit" className="btn-outline text-xs">
+                              REJECT
+                            </button>
+                          </form>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-quedera-navy/40">—</span>
+                      )}
                     </td>
                   </tr>
                 );
