@@ -9,13 +9,13 @@
 /**
  * UK standard VAT rate (20%).
  *
- * DECISION REQUIRED — whether SENTINEL invoices on a gross or net basis,
- * and whether VAT applies at the point of invoicing or is handled by the
- * consultant as a VAT-registered supplier. Default 20%.
+ * LOCKED 2026-11-04 (delegated to TACbot): 20%, invoiced GROSS — VAT is
+ * added on top of the subtotal on the invoice. If the consultant is a VAT
+ * registered supplier and should invoice net, change this one constant.
  */
 export const VAT_RATE = 0.2;
 
-/** Default payment terms. DECISION REQUIRED — 14 days is a placeholder. */
+/** Payment terms in days. LOCKED 2026-11-04 (delegated to TACbot): 14 days. */
 export const DEFAULT_PAYMENT_TERMS_DAYS = 14;
 
 export interface InvoiceDraft {

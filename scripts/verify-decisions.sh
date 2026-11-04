@@ -239,7 +239,16 @@ echo
 
 if [ "$RESEED" = "1" ]; then
   echo "Restoring demo state (reseed)..."
-  (cd "$(dirname "$0")/.." && npx prisma db seed > /dev/null 2>&1) && echo "  ok" || echo "  could not reseed"
+  ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+  # Prefer the compose stack when it is up - the app and the script must
+  # seed the same database. Fall back to a local prisma run otherwise.
+  if docker compose -f "$ROOT/docker-compose.yml" ps --status running 2>/dev/null | grep -q sentinel-app; then
+    (cd "$ROOT" && docker compose exec -T app npx prisma db seed > /dev/null 2>&1) \
+      && echo "  ok (via compose)" || echo "  could not reseed"
+  else
+    (cd "$ROOT" && npx prisma db seed > /dev/null 2>&1) \
+      && echo "  ok (local)" || echo "  could not reseed"
+  fi
   echo
 fi
 

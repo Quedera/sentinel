@@ -140,29 +140,49 @@ most-recently-active. It reseeds afterwards to restore the demo state
 
 It exits non-zero if any check fails, so it works as a CI gate.
 
-### Running it as a service
+### Publishing to Local
 
-The app can run as a systemd **user** unit, which keeps it alive outside any
-agent session and across reboots (this box has user lingering enabled).
-
-```bash
-cp deploy/sentinel.service ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now sentinel.service
-systemctl --user status sentinel.service
-```
-
-It runs `next dev` with hot reload, matching how the DUET frontend is
-hosted on this box, and listens on `0.0.0.0:3002`. Logs go to
-`/tmp/sentinel.log`.
-
-The Postgres container needs to come back after a reboot too:
+Local is a Docker Compose stack, mirroring the deployed (Azure Container Apps)
+shape so `docker compose up` behaves like the real environment at 1:1
+scale: one Node process for the app, Postgres on a private network,
+healthchecks, and named volumes for persistent data.
 
 ```bash
-docker update --restart unless-stopped sentinel-pg
+cd ~/.openclaw/workspace/sentinel
+
+# One-time: the password the stack uses for Postgres
+grep -q POSTGRES_PASSWORD .env || echo 'POSTGRES_PASSWORD="sentinel"' >> .env
+
+docker compose up -d --build              # build + start
+docker compose exec app npx prisma migrate deploy
+docker compose exec app npx prisma db seed
 ```
 
-To stop it: `systemctl --user disable --now sentinel.service`.
+The app is published on **http://192.168.0.3:3002** (and `localhost:3002`).
+Postgres is published on `127.0.0.1:5433` only — loopback, so host-side
+tooling can reach it without exposing it to the LAN.
+
+Both services are `restart: unless-stopped`, so they come back after a
+reboot. The app has a healthcheck at `/api/health` that reports whether the
+**database** is reachable, not just whether the process is alive.
+
+```bash
+docker compose ps               # status
+docker compose logs -f app      # app logs
+docker compose restart app      # restart after a code change
+docker compose down             # stop (keeps the named volumes)
+```
+
+### Verifying the published stack
+
+```bash
+npm run verify
+# or: ./scripts/verify-decisions.sh http://192.168.0.3:3002
+```
+
+The script seeds and inspects the same database the app is using, so run it
+against the published stack rather than a local dev server when you want to
+check the deployed shape.
 
 ## Routes
 
@@ -274,28 +294,27 @@ sentinel/
 
 Owner — Craig. Target — **November 2026**.
 
-**Still open (needs Craig's call):**
+**Locked 2026-11-04 (delegated to TACbot)** — each is a single constant, so
+changing any of them is a one-line edit:
+
+| Decision | Locked value | Where |
+|---|---|---|
+| Termination penalty rate | 10% of undelivered value, symmetric both sides | `TERMINATION_PENALTY_RATE` |
+| Termination notice period | 14 days | `TERMINATION_NOTICE_DAYS` |
+| VAT | 20%, invoiced **gross** (added on top of subtotal) | `VAT_RATE` |
+| Payment terms | 14 days from issue | `DEFAULT_PAYMENT_TERMS_DAYS` |
+| Service Confirmation | version `2026-11-04`, text in the same module | `CURRENT_SERVICE_CONFIRMATION_VERSION` |
+| `TERMINATED` engagement state | accepted as an extension to the §15 brief | `prisma/schema.prisma` |
+| Search rating source | denormalised on `Consultant.rating`, admin-maintained | `prisma/schema.prisma` |
+
+**Still open:**
 
 1. **SENTINEL vs DUET relationship** — same brand family / sibling / standalone?
-2. **Hosting target** — Azure (if DUET-family) / Vercel / something else?
+2. **Hosting target beyond local** — this deploy is Local (Docker Compose); the
+   Azure Container Apps target follows the SENTINEL-vs-DUET answer.
 3. **Contract storage** — `local` is wired; `azureblob` needs a connection string
-4. **Termination penalty rate** — defaults to 10% of undelivered value
-   (`TERMINATION_PENALTY_RATE` in `lib/termination.ts`). Is 10% right?
-5. **Termination notice period** — defaults to 14 days
-   (`TERMINATION_NOTICE_DAYS`). Right?
-6. **VAT basis** — defaults to 20% on the subtotal, invoiced gross
-   (`VAT_RATE` in `lib/invoicing.ts`). Gross or net? Does VAT sit with the
-   consultant as a registered supplier?
-7. **Payment terms** — defaults to 14 days from issue
-   (`DEFAULT_PAYMENT_TERMS_DAYS`).
-8. **Service Confirmation legal text + version scheme** — the current document
-   (`version 2026-11-01`) needs sign-off from whoever owns the QUEDERA service
-   terms. `lib/service-confirmation.ts` holds the text and version together.
-9. **TERMINATED as a new engagement state** — an extension beyond the §15
-   brief, needed for decision #5. Confirm it is acceptable to extend the
-   state machine.
-10. **Search rating source** — `Consultant.rating` is denormalised and
-    admin-maintained for now; there is no review submission flow yet.
+4. **Service Confirmation legal text** — the version and text are locked, but
+   the wording still needs sign-off from whoever owns the QUEDERA service terms
 
 ## Audit trail
 

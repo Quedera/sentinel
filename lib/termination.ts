@@ -11,17 +11,19 @@
 //   2. whether notice applies before a mid-engagement cancellation
 
 /**
- * DECISION REQUIRED — penalty rate as a fraction of remaining contracted
- * value. Default 10%. Change here once Craig confirms.
+ * Penalty rate as a fraction of remaining contracted value.
+ *
+ * LOCKED 2026-11-04 (delegated to TACbot): 10%. Symmetric — the same rate
+ * applies whichever side walks away.
  */
 export const TERMINATION_PENALTY_RATE = 0.1;
 
 /**
  * Notice period in days for a mid-engagement cancellation.
  *
- * DECISION REQUIRED — default 14. A party that gives no notice is charged
- * the full penalty; a party that gives notice pays the penalty but the
- * effective date moves to the end of the notice window.
+ * LOCKED 2026-11-04 (delegated to TACbot): 14 days. A party that gives no
+ * notice is charged the full penalty; a party that gives notice pays the
+ * penalty but the effective date moves to the end of the notice window.
  */
 export const TERMINATION_NOTICE_DAYS = 14;
 

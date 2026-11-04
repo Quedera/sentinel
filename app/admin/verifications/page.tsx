@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { prisma } from "@/lib/db";
 import { authProvider } from "@/lib/auth";
@@ -34,8 +35,25 @@ const STATUS_STYLES: Record<string, string> = {
 async function decide(formData: FormData) {
   "use server";
 
-  const userId = String(formData.get("userId") ?? "");
-  const decision = String(formData.get("decision") ?? "");
+  // Next encodes a FormData argument with an argument-index prefix
+  // ("0_userId") on the JS path, while a no-JS browser posts the raw
+  // field names ("userId"). Reading only one of them makes the button
+  // silently do nothing on the other path - a 200 that changes nothing.
+  // Accept both.
+  const pick = (name: string): string => {
+    const direct = formData.get(name);
+    if (direct !== null && direct !== undefined && direct !== "") {
+      return String(direct);
+    }
+    const prefixed = formData.get("0_" + name);
+    if (prefixed !== null && prefixed !== undefined && prefixed !== "") {
+      return String(prefixed);
+    }
+    return "";
+  };
+
+  const userId = pick("userId");
+  const decision = pick("decision");
   if (!userId || (decision !== "grant" && decision !== "reject")) return;
 
   let actorId: string | null = null;
@@ -54,9 +72,15 @@ async function decide(formData: FormData) {
     }
   }
 
-  if (!actorId) return;
+  // No actor means nobody is signed in (or the signed-in user is not
+  // an administrator). Redirect to the login page rather than returning
+  // quietly - a server action that silently does nothing is worse than
+  // one that says "sign in first".
+  if (!actorId) {
+    redirect("/login");
+  }
 
-  await decideVerification(actorId, userId, decision);
+  await decideVerification(actorId!, userId, decision);
   revalidatePath("/admin/verifications");
 }
 

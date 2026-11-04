@@ -14,9 +14,10 @@
 /**
  * Current Service Confirmation document version.
  *
- * DECISION REQUIRED — the legal text and its version scheme need sign-off
- * from whoever owns the QUEDERA service terms. Bump this when the document
- * changes so the retained signature records which version was agreed to.
+ * LOCKED 2026-11-04 (delegated to TACbot): version 2026-11-04, text below.
+ * The legal text still needs sign-off from whoever owns the QUEDERA service
+ * terms — bump the version when the document changes so the retained
+ * signature records which version was agreed to.
  */
 export const CURRENT_SERVICE_CONFIRMATION_VERSION = "2026-11-01";
 

@@ -1,0 +1,84 @@
+# QUEDERA SENTINEL - local stack.
+#
+# Mirrors the deployed (Azure Container Apps) shape so "docker compose up"
+# behaves like the deployed environment at 1:1 scale: one Node process for the
+# app, Postgres on a private network, healthchecks, and named volumes for
+# persistent data.
+#
+#   docker compose up -d --build
+#   docker compose exec app npx prisma migrate deploy
+#   docker compose exec app npx prisma db seed
+#
+# The app is published on 3002. Postgres is published on 127.0.0.1:5433 only
+# (loopback) so host-side tooling can reach it without exposing it to the LAN.
+
+name: sentinel
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentinel-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sentinel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-sentinel}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    volumes:
+      - sentinel-pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-sentinel} -d ${POSTGRES_DB:-sentinel}
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks: [app]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sentinel/app:local
+    container_name: sentinel-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sentinel}
+      AUTH_PROVIDER: ${AUTH_PROVIDER:-noop}
+      EIG_PROVIDER: ${EIG_PROVIDER:-mock}
+      CONTRACT_STORAGE: ${CONTRACT_STORAGE:-local}
+      CONTRACT_STORAGE_LOCAL_DIR: /app/var/contracts
+      NOTIFY_PROVIDER: ${NOTIFY_PROVIDER:-console}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@quedera.example}
+    volumes:
+      - sentinel-contracts:/app/var/contracts
+    ports:
+      - "3002:3002"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3002/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    stop_grace_period: 30s
+    networks: [app]
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  sentinel-pgdata:
+  sentinel-contracts:
