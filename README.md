@@ -1,37 +1,55 @@
 # QUEDERA SENTINEL
 
 > Two-sided consultant marketplace with a controlled contracting workflow.
-> Wireframe-to-prototype scaffold (Tier 1).
+> Wireframe-to-prototype — Tier 1 UI complete, Tier 2 data layer in progress.
 
 **Source brief:** `~/.openclaw/workspace/sentinel/source/sentinel-wireframes.pdf`
 **Brand source:** `~/.openclaw/workspace/sentinel/source/sentinel-logo.jpg`
 
 ## What this is
 
-A clickable Next.js scaffold that turns the 18 wireframe screens into routable
-pages with mock data. Pure UI — no backend, no real auth, no real file uploads
-or e-signature, no persistence. The point is to demo the user flow.
+All 18 wireframe screens implemented as routable Next.js pages, plus a Tier 2
+data layer: Prisma schema (7 models), pluggable auth / e-signature / storage
+providers, and working API routes for search, contract signing and DocuSign
+webhooks.
 
-This is **Tier 1** of a three-tier plan:
+This is **Tier 1 of 3, with Tier 2 plumbing landed**:
 
-1. **Wireframe scaffold** *(this)* — Next.js + TypeScript + Tailwind, all 18
-   screens as clickable routes, mocked data, no backend. Run locally with
-   `npm run dev`.
-2. **Working vertical slice** — one critical path end-to-end working with real
-   auth, real DB, real contract storage.
-3. **Production MVP** — everything wired including KYC, audit trail, e-sig
-   compliance. Needs third-party providers.
+1. **Wireframe scaffold** *(complete)* — all 18 screens as clickable routes
+   with mock data. Runs with no database.
+2. **Working vertical slice** *(in progress)* — real DB (Postgres), pluggable
+   auth, real contract storage, real server-side search filtering.
+   See [Database setup](#database-setup).
+3. **Production MVP** *(not started)* — KYC, full audit trail, e-sign compliance.
+   Needs third-party provider accounts.
+
+### Provider matrix
+
+Swapped via env var, no code change:
+
+| Layer | Provider(s) | Env var |
+|---|---|---|
+| Auth | `noop` / `nextauth` / `entra` | `AUTH_PROVIDER` |
+| E-signature | `mock` / `docusign` | `EIG_PROVIDER` |
+| Contract storage | `local` / `azureblob` | `CONTRACT_STORAGE` |
+
+`noop` accepts any email + any non-empty password and auto-creates a stub user
+row. **Never use in production.**
 
 ## Tech stack
 
 - **Next.js 14** (App Router) + **TypeScript**
 - **Tailwind CSS** with a custom palette (QUEDERA navy + SENTINEL green)
 - **Inter** font
-- Mock data in `lib/mock-data.ts`
+- **Prisma 5** + **Postgres 16** — 7 models, engagement state machine per brief §15
+- **DocuSign eSignature** SDK (`docusign-esign`) for the contract-signing path
+- Mock data in `lib/mock-data.ts` (Tier 1 fallback); seeded DB data via `prisma/seed.js`
 - No external UI libraries — everything is hand-rolled to keep the install
   footprint small
 
 ## Running it
+
+### UI only (no database)
 
 ```bash
 cd ~/.openclaw/workspace/sentinel
@@ -40,12 +58,65 @@ npm run dev
 # → http://localhost:3000
 ```
 
+### With the database
+
+See [Database setup](#database-setup), then `npm run dev`.
+
 For a production build:
 
 ```bash
 npm run build
 npm run start
 ```
+
+> **Port note:** `3000` and `3001` are already taken on `openclaw130`
+> (homepage, PULSE frontend). Use `npx next start -p 3002 -H 0.0.0.0`
+> to bind SENTINEL on its own port and reach it over the LAN.
+
+## Database setup
+
+```bash
+# 1. Postgres on 5433, bound to loopback only (matches DATABASE_URL in .env.example)
+docker run -d --name sentinel-pg \
+  -p 127.0.0.1:5433:5432 \
+  -e POSTGRES_USER=sentinel \
+  -e POSTGRES_PASSWORD=sentinel \
+  -e POSTGRES_DB=sentinel \
+  -e POSTGRES_HOST_AUTH_METHOD=scram-sha-256 \
+  postgres:16-alpine
+
+# 2. Env file — Prisma CLI reads .env, NOT .env.local
+cp .env.example .env
+# set DATABASE_URL="postgresql://sentinel:sentinel@localhost:5433/sentinel"
+
+# 3. Schema + seed
+npm run db:migrate      # creates prisma/migrations/ and applies the schema
+npm run db:seed         # demo data across all 11 engagement states
+
+# 4. Run
+npm run dev
+```
+
+Also: `npm run db:reset` (drop + re-migrate + re-seed), `npm run db:studio`
+(Prisma Studio on localhost:5555).
+
+> The Postgres port is published to `127.0.0.1` only, and `scram-sha-256` is
+> enforced for TCP connections — the container's own loopback stays `trust`,
+> which is the postgres image default and never leaves the container.
+
+### Seeded logins
+
+The `noop` auth provider accepts **any** password for a known email:
+
+| Email | Role |
+|---|---|
+| `admin@quedera.example` | ADMIN |
+| `client@abc-corp.example` | CLIENT |
+| `jane.smith@example.com` | CONSULTANT |
+| `david.jones@example.com` | CONSULTANT |
+| `priya.sharma@example.com` | CONSULTANT |
+| `elena.volkov@example.com` | CONSULTANT |
+| `marcus.reid@example.com` | CONSULTANT (profile incomplete — excluded from search) |
 
 ## Routes
 
@@ -103,7 +174,17 @@ sentinel/
 │   └── PageHeader.tsx
 ├── lib/
 │   ├── types.ts            # EngagementStatus, Consultant, Client, AuditEvent
-│   └── mock-data.ts        # Sample consultants, engagements, audit events
+│   ├── mock-data.ts        # Sample consultants, engagements, audit events
+│   ├── db.ts               # Prisma singleton (survives Next.js HMR)
+│   ├── api/contract.ts     # Shared API request/response contracts
+│   ├── auth/               # Pluggable auth (noop | nextauth | entra)
+│   ├── eig/                # Pluggable e-signature (mock | docusign)
+│   └── storage/            # Pluggable contract storage (local | azureblob)
+├── prisma/
+│   ├── schema.prisma       # 7 models + engagement state machine
+│   └── seed.js             # Local dev seed — all 11 engagement states
+├── scripts/
+│   └── smoke-test-sign.js  # DocuSign e-signature smoke test
 ├── public/brand/           # (drop the logo here when ready)
 ├── app/globals.css         # Tailwind + base styles
 ├── tailwind.config.ts      # QUEDERA navy + SENTINEL green palette
@@ -121,33 +202,46 @@ sentinel/
 | `sentinel-dark` | `#1F9D78` | Hover / accent          |
 | `sentinel-tint` | `#E5F8F1` | Soft backgrounds, badges |
 
-## Open questions (still pending)
+## Open questions
 
-Blockers for Tier 2 / Tier 3:
+**Locked** (Craig, 2026-10-18):
 
-1. **Owner** — solo or co-driven with Craig? (Affects whether we share DUET infra.)
-2. **Target date** — even rough (Q4 2026 / 2027?).
-3. **SENTINEL vs DUET relationship** — same brand family / sibling / standalone?
-4. **E-signature provider** — DocuSign / Adobe Sign / built-in?
-5. **Hosting target** — Azure (if DUET-family) / Vercel / something else?
-6. **DB + contract storage** — Postgres + S3 / Cosmos if Azure-native?
+- Positioning — "two-sided marketplace"
+- E-signature — **DocuSign**
+- Identity verification — at registration, on signing the **Sentinel Service Confirmation**
+- Money flow — **invoicing**
+- Disputes / mid-engagement cancellation — contract termination penalty, both sides
+- Profile completeness — pure UX, weighted, soft nudge, no gating
+- Notifications — **email**
+- Search ranking — most-recently-active, then by rating (refine post-launch)
+- Owner — Craig. Target — **November 2026**
+
+**Still open:**
+
+1. **SENTINEL vs DUET relationship** — same brand family / sibling / standalone?
+2. **Hosting target** — Azure (if DUET-family) / Vercel / something else?
+3. **Contract storage** — `local` is wired; `azureblob` needs a connection string
 
 ## Audit trail
 
 The wireframe brief explicitly calls out an audit trail for every state change.
-This scaffold includes a read-only audit view at `/admin/audit` with sample
-events. Tier 2 will need to actually write events here.
+`AuditEvent` is a first-class model with 25 action types, and the seed writes
+real events (profile created, CV uploaded, hire requested, signed, search
+performed). The read-only view lives at `/admin/audit`.
 
-## Things deliberately not built in Tier 1
+Still to do: emit `SEARCH_PERFORMED` from the live search route when the caller
+is signed in (currently a TODO in the route handler).
 
-- Real authentication (forms are visual, not wired)
-- Real file uploads (drag-drop is visual)
-- Real e-signature (typed-name is a placeholder — flagged in the wireframe
-  brief as a thing that should be designed properly before production)
-- Real-data persistence (everything is mock data)
-- Real search filtering (results page filters by sector + skill only)
-- Real notifications (5-day countdown is shown but not enforced)
-- Real payment/invoicing
-- Real identity verification
+## Not yet wired
+
+- **Identity verification** — Sentinel Service Confirmation at registration
+- **Invoicing** — no invoice model in the schema
+- **Termination penalties** — no fields for dispute / cancellation handling
+- **Email notifications** — no mailer wired
+- **Rating tiebreak** — search orders by `createdAt desc` only
+- **Profile completeness weighting** — the dashboard shows a static figure
+- **Real e-signature** — DocuSign SDK is integrated but needs sandbox credentials
+  (`scripts/smoke-test-sign.js` exercises it); the typed-name fallback remains in the UI
+- **Contract storage** — `local` provider only
 
 All of these are Tier 2 / Tier 3 concerns.
